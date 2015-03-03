@@ -16,6 +16,9 @@
 #define TDELTA  -4
 #define UPDATE_PERIOD  60
 
+#define TEMP_ON (TNORM - THYST)
+#define TEMP_OFF  (TNORM)
+
 /**
  * Globals
  */
@@ -57,8 +60,7 @@ int temperature() {
  * Transmit temperature and heater state over XBee network.
  */
 void transmit(int t, byte state) {
-  //byte payload[4] = {'D', 'F', (byte) t, state};
-  uint8_t payload[4] = {'D', 'F', 0xAB, 0xCD};
+  uint8_t payload[4] = {'D', 'F', (uint8_t) t, state};
   ZBTxRequest request = ZBTxRequest(BROADCAST, payload, sizeof(payload));
   xbee.send(request);
 }
@@ -67,17 +69,16 @@ void transmit(int t, byte state) {
  * Loop
  */
 void loop() {  
-  int tempOn = TNORM - THYST;
-  int tempOff = TNORM;
+  
   int t = temperature();
 
   /**
    * Control heater
    */
-  if (t < tempOn) {
+  if (t < TEMP_ON) {
     HEAT_ON;
   } 
-  else if (t >= tempOff) {
+  else if (t >= TEMP_OFF) {
     HEAT_OFF;
   }
 
@@ -97,7 +98,6 @@ void loop() {
   Serial.print(temperature());
   Serial.print(" ");
   Serial.println(state);
-
 
   delay(1000);  
 }
