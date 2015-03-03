@@ -12,14 +12,14 @@
 #define HEAT_OFF digitalWrite(RELAY, LOW); digitalWrite(13,LOW);
 
 #define TNORM 103
-#define THYST 1
-#define TDELTA  3
-#define UPDATE_PERIOD  5
+#define THYST 2
+#define TDELTA  -4
+#define UPDATE_PERIOD  60
 
 /**
  * Globals
  */
-Average<float> smoothingBuffer(5);
+Average<float> smoothingBuffer(10);
 Average<int> tempData(UPDATE_PERIOD);
 SoftwareSerial softSerial(10, 11);
 XBee xbee = XBee();
@@ -60,7 +60,6 @@ void transmit(int t, byte state) {
   //byte payload[4] = {'D', 'F', (byte) t, state};
   uint8_t payload[4] = {'D', 'F', 0xAB, 0xCD};
   ZBTxRequest request = ZBTxRequest(BROADCAST, payload, sizeof(payload));
-  Serial.println("Transmitting");
   xbee.send(request);
 }
 
@@ -68,9 +67,9 @@ void transmit(int t, byte state) {
  * Loop
  */
 void loop() {  
-  float tempOn = TNORM - THYST;
-  float tempOff = TNORM;
-  float t = temperature();
+  int tempOn = TNORM - THYST;
+  int tempOff = TNORM;
+  int t = temperature();
 
   /**
    * Control heater
