@@ -23,7 +23,7 @@
  */
 #define TNORM 103  /* desired temperature (degrees F) */
 #define TDELTA 0    /* delta between on and off temperatures */
-#define TDIFF 2
+#define TDIFF 1
 #define SAMPLE_PERIOD  300 
 #define REPORTING_PERIOD 300
 
@@ -37,8 +37,8 @@ OneWire oneWire(DS1820);
 DallasTemperature ds1820(&oneWire);
 XBee xbee = XBee();
 XBeeAddress64 BROADCAST = XBeeAddress64(0x0, BROADCAST_ADDRESS);
-long reportingTime = 0;
-long sampleTime = 0;
+long reportingTime = REPORTING_PERIOD; // force report on boot
+long sampleTime = SAMPLE_PERIOD;  // force sample on boot
 
 /**
  * Setup
@@ -50,10 +50,11 @@ void setup() {
   xbee.setSerial(softSerial);
   pinMode(RELAY, OUTPUT);
   pinMode(13, OUTPUT); /* onboard LED indicates call for heat */
-  
-  //TODO: fill initial sample buffer with current temperature.
-  if (temperature() < (TNORM - TDELTA)) {
-    HEAT_ON;
+
+  // fill buffer with start-up temperature
+  int startupTemperature = temperature();
+  for (int i=0; i<SAMPLE_PERIOD; i++) {
+    tempData.push(startupTemperature);
   }
 }
 
@@ -61,7 +62,7 @@ void setup() {
  * Read the temperature from the first DS1820 sensor on the
  * bus.  The temperature reading is further adjusted by
  * TDELTA to compensate for the difference in temperature
- * between the water in the tub and the wajjjter at the sensor.
+ * between the water in the tub and the water at the sensor.
  */
 int temperature() {
   ds1820.requestTemperatures();
@@ -111,8 +112,10 @@ void loop() {
   /**
   * Output to console for debugging.
   */
-  Serial.print(t);
-  Serial.print(" ");
+  Serial.print(temperature()); // actual temp
+  Serial.print(", ");
+  Serial.print(t);  // mean temp
+  Serial.print(", ");
   Serial.println(state);
 
   reportingTime++;
