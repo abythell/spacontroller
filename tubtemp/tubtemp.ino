@@ -22,7 +22,6 @@
    User Settings
 */
 #define TNORM 103  /* desired temperature (degrees F) */
-#define TDELTA 0    /* delta between on and off temperatures */
 #define TDIFF 1
 #define REPORTING_PERIOD 300
 
@@ -60,7 +59,7 @@ void setup() {
 /**
    Read the temperature from the first DS1820 sensor on the
    bus.  The temperature reading is further adjusted by
-   TDELTA to compensate for the difference in temperature
+   TDIFF to compensate for the difference in temperature
    between the water in the tub and the water at the sensor.
 */
 int temperature() {
@@ -94,7 +93,7 @@ void loop() {
 
   if (currentTime > reportingTime + REPORTING_PERIOD * 1000) {
     int t = tempData.mean();
-    if (t < (TNORM - TDELTA)) {
+    if (t < TNORM) {
       HEAT_ON;
     }
     else {
