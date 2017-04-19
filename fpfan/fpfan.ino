@@ -22,19 +22,27 @@ void setup() {
   pinMode(RELAY, OUTPUT);
   pinMode(13, OUTPUT); /* onboard LED indicates call for fan */
   FAN_OFF;
+  attachInterrupt(digitalPinToInterrupt(SWITCH), fanControl, CHANGE);
+}
+
+void fanControl() {
+  if (digitalRead(SWITCH)) {
+    FAN_OFF;
+  } else {
+    FAN_ON;
+  }
 }
 
 /**
  * Loop
  */
 void loop() {
-
-  //TODO: use interrupt (on change) and sleep
+  /*
   if (digitalRead(SWITCH)) {
     FAN_OFF;
   } else {
     FAN_ON;
-  }  
-  delay(1000);
+  }
+  */
 }
 
