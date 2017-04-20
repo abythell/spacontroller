@@ -36,14 +36,14 @@ DallasTemperature ds1820(&oneWire);
 XBee xbee = XBee();
 XBeeAddress64 BROADCAST = XBeeAddress64(0x0, BROADCAST_ADDRESS);
 unsigned long sampleTime = 0;
-unsigned long reportingTime = 0;
+unsigned long reportingPeriod = REPORTING_PERIOD - 1; // force report on boot
 
 /**
    Setup
 */
 void setup() {
-  Serial.begin(9600);
   ds1820.begin();
+  Serial.begin(9600);
   softSerial.begin(9600);
   xbee.setSerial(softSerial);
   pinMode(RELAY, OUTPUT);
@@ -84,24 +84,29 @@ void loop() {
 
   unsigned long currentTime = millis();
 
-  if ( currentTime > sampleTime + 1000) {
+  if ( currentTime >= sampleTime + 1000L) {
     int t = temperature();
     tempData.push(t);
+    Serial.print(reportingPeriod);
+    Serial.print(":\t");
     Serial.println(t);
     sampleTime = currentTime;
+    reportingPeriod++;
+    
   }
 
-  if (currentTime > reportingTime + REPORTING_PERIOD * 1000) {
-    int t = tempData.mean();
-    if (t < TNORM) {
+  if (reportingPeriod == REPORTING_PERIOD) {
+    int m = tempData.mean();
+    if (m < TNORM) {
       HEAT_ON;
     }
     else {
       HEAT_OFF;
     }
-    Serial.println("Transmitting");
-    transmit(tempData.mean(), digitalRead(RELAY));
-    reportingTime = currentTime;
+    Serial.print("T=");
+    Serial.println(m);
+    transmit(m, digitalRead(RELAY));
+    reportingPeriod = 0;
   }
 }
 
