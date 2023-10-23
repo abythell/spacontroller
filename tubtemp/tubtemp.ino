@@ -86,27 +86,33 @@ void loop() {
 
   if ( currentTime >= sampleTime + 1000L) {
     int t = temperature();
+    if (t == -196) {
+      Serial.println("Probe disconnected");
+    } else {
+      Serial.print(t);
+      Serial.println("F ");
+    }
     tempData.push(t);
-    Serial.print(reportingPeriod);
-    Serial.print(":\t");
-    Serial.println(t);
     sampleTime = currentTime;
-    reportingPeriod++;
-    
+    reportingPeriod++;  
   }
 
   if (reportingPeriod == REPORTING_PERIOD) {
     int m = tempData.mean();
-    if (m < TNORM) {
+    if (m < 0) {
+      // Water should only ever be
+      // as low as 5-10 degrees when first filled.  If temp is
+      // negative, (-196) the probe is likely disconnected.
+      // Turn the heater off to prevent overheating. 
+      HEAT_OFF;
+    } else if (m < TNORM) {
+      // Water is above zero but below the set point, turn the heater on
       HEAT_ON;
     }
     else {
       HEAT_OFF;
     }
-    Serial.print("T=");
-    Serial.println(m);
     transmit(m, digitalRead(RELAY));
     reportingPeriod = 0;
   }
 }
-
